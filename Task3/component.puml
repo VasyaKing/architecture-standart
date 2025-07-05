@@ -1,0 +1,44 @@
+@startuml
+!include ../c4/C4_Component.puml
+
+Container_Boundary(ms_deposit, "Сервис депозитов") {
+  Component(deposit_controller, "DepositController", "Обработка REST-запросов от клиентов / админки")
+  Component(deposit_service, "DepositService", "Бизнес-логика депозитов")
+  Component(deposit_repository, "DepositRepository", "Доступ к БД депозитов")
+  Component(deposit_event_publisher, "DepositEventPublisher", "Публикация событий в Kafka")
+}
+
+Container_Boundary(ms_lead, "Сервис заявок") {
+  Component(lead_controller, "LeadController", "Обработка REST-запросов от клиентов / админки")
+  Component(lead_service, "LeadService", "Бизнес-логика заявок")
+  Component(lead_repository, "LeadRepository", "Доступ к БД заявок")
+  Component(lead_event_publisher, "LeadEventPublisher", "Публикация событий в Kafka")
+}
+
+Container_Boundary(ms_rate, "Сервис ставок") {
+  Component(rate_controller, "RateController", "Обработка REST-запросов от клиентов / админки")
+  Component(rate_service, "RateService", "Расчет ставок")
+  Component(rate_repository, "RateRepository", "Хранение данных о ставках")
+}
+
+Container_Boundary(ms_notification, "Сервис уведомлений") {
+  Component(notification_listener, "NotificationListener", "Подписка на события Kafka")
+  Component(notification_service, "NotificationService", "Формирование уведомлений")
+  Component(notification_provider_client, "SmsProviderClient", "Вызовы внешнего SMS API")
+}
+
+Rel(deposit_controller, deposit_service, "Использует")
+Rel(deposit_service, deposit_repository, "Использует")
+Rel(deposit_service, deposit_event_publisher, "Публикует события")
+
+Rel(lead_controller, lead_service, "Использует")
+Rel(lead_service, lead_repository, "Использует")
+Rel(lead_service, lead_event_publisher, "Публикует события")
+
+Rel(rate_controller, rate_service, "Использует")
+Rel(rate_service, rate_repository, "Использует")
+
+Rel(notification_listener, notification_service, "Передает событие")
+Rel(notification_service, notification_provider_client, "Отправляет SMS")
+
+@enduml

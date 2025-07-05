@@ -1,0 +1,32 @@
+
+@startuml
+!include ../c4/C4_Context.puml
+
+Person(client, "Клиент", "Пользуется сайтом и интернет-банком для открытия депозитов")
+Person(callcenter, "Оператор кол-центра", "Консультирует по актуальным ставкам, создает заявки")
+Person(callcenter_external, "Оператор внешнего кол-центра", "Консультирует по актуальным ставкам, переадресует к внутреннему колцентру на создание заявки")
+Person(manager_deposit, "Менеджер отдела управления депозитами", "Управляет ставками депозитов")
+
+System_Boundary(system, "Система открытия депозитов") {
+  System(admin_gateway, "Админ API Gateway", "Авторизация и маршрутизация админ-запросов")
+  System(auth, "Keycloak", "Сервис авторизации")
+  System(ms_lead, "Сервис заявок", "Логика работы с заявками")
+  System(admin_ui, "Admin UI", "Управление заявками, просмотр ставок")
+  System(ftp, "файловая система для передачи актуальных ставок", "Актуальные ставки")
+  System(ms_rate, "Сервис ставок", "Расчет ставок и персональных условий")
+}
+Rel(admin_ui, admin_gateway, "REST", "Отправка админ-запросов")
+Rel(admin_gateway, auth, "OAuth 2.0 / OpenID Connect", "Авторизация через Keycloak")
+Rel(admin_gateway, ms_lead, "REST", "Управление заявками")
+Rel(admin_gateway, ms_rate, "REST", "Управление ставками")
+
+Rel(ms_rate, ftp, "SFTP", "Выгружает актуальные ставки")
+
+Rel(manager_deposit, admin_ui, "Управляет ставками / депозитами через Admin UI")
+Rel(callcenter, admin_ui, "Создает заявки, видит актуальные ставки")
+Rel(callcenter_external, ftp, "Получает актуальные ставки")
+Rel(callcenter_external, callcenter, "Переадресует клиента для создания заявки")
+Rel(client, callcenter, "Звонит для получения информации об актуальных ставках")
+Rel(client, callcenter_external, "Звонит для получения информации об актуальных ставках")
+
+@enduml
