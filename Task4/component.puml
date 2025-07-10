@@ -1,0 +1,16 @@
+@startuml
+!include ../c4/C4_Component.puml
+
+Container_Boundary(ms_rate, "Сервис ставок") {
+  Component(rate_controller, "RateController", "REST API контроллер для управления ставками")
+  Component(rate_service, "RateService", "Бизнес-логика расчета и управления ставками")
+  Component(rate_repository, "RateRepository", "Доступ к хранилищу ставок")
+  Component(rate_exporter, "RateExporter", "Формирует файлы ставок и выгружает их на SFTP")
+}
+
+Rel(rate_controller, rate_service, "Вызывает")
+Rel(rate_service, rate_repository, "Читает / сохраняет ставки")
+Rel(rate_service, rate_exporter, "Инструктирует на выгрузку ставок")
+Rel(rate_exporter, ftp, "SFTP", "Выгружает файлы ставок")
+
+@enduml

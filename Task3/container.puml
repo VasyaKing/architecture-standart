@@ -1,0 +1,60 @@
+@startuml
+!include ../c4/C4_Container.puml
+
+Person(client, "Клиент", "Пользуется сайтом и интернет-банком для открытия депозитов")
+Person(backoffice, "Сотрудник бэк-офиса", "Обрабатывает заявки")
+Person(callcenter, "Оператор кол-центра", "Связывается с клиентами по заявкам")
+Person(manager_deposit, "Менеджер депозитов", "Управляет заявками и ставками депозитов")
+Person(manager_credit, "Менеджер кредитования", "Определяет спецставки по депозитам")
+
+System_Boundary(deposit_system, "Система открытия депозитов") {
+
+  Container(web_app, "Публичный сайт", "Web-приложение", "Отображение ставок, сбор заявок")
+  Container(ib_app, "Интернет-банк", "Web-приложение", "Подача заявки и управление депозитами")
+
+  Container(ms_gateway, "API Gateway", "Spring Boot", "Авторизация и маршрутизация клиентских запросов")
+  Container(admin_gateway, "Админ API Gateway", "Spring Boot", "Авторизация и маршрутизация админ-запросов")
+
+  Container(auth, "Keycloak", "Java", "OAuth2/OpenID Connect авторизация")
+  Container(ms_lead, "Сервис заявок", "Kotlin + Spring", "Работа с заявками")
+  Container(ms_deposit, "Сервис депозитов", "Kotlin + Spring", "Работа с депозитами")
+  Container(ms_rate, "Сервис ставок", "Kotlin + Spring", "Расчёт ставок и условий")
+  Container(admin_ui, "Admin UI", "Web UI (Angular)", "Управление заявками, депозитами, ставками")
+  Container(ms_abs, "АБС", "Монолит", "Информация о старых депозитах и кредитах")
+  Container(ms_notification, "Сервис уведомлений", "Spring Boot", "Отправка уведомлений")
+  Container(queue, "Kafka", "Event Bus", "Асинхронная передача событий")
+  Container(sms_provider, "SMS-провайдер", "Внешний API", "Отправка СМС клиентам")
+
+  Rel(client, web_app, "Просматривает ставки, подаёт заявку")
+  Rel(client, ib_app, "Подаёт заявку, подтверждает СМС")
+
+  Rel(web_app, ms_gateway, "REST")
+  Rel(ib_app, ms_gateway, "REST")
+
+  Rel(ms_gateway, auth, "OAuth 2.0")
+  Rel(ms_gateway, ms_lead, "REST")
+  Rel(ms_gateway, ms_deposit, "REST")
+  Rel(ms_gateway, ms_rate, "REST")
+
+  Rel(admin_ui, admin_gateway, "REST")
+  Rel(admin_gateway, auth, "OAuth 2.0")
+  Rel(admin_gateway, ms_lead, "REST")
+  Rel(admin_gateway, ms_deposit, "REST")
+  Rel(admin_gateway, ms_rate, "REST")
+
+  Rel(ms_lead, ms_abs, "REST/SOAP", "Получение информации о заявках")
+  Rel(ms_deposit, ms_abs, "REST/SOAP", "Получение информации о депозитах")
+  Rel(ms_deposit, ms_rate, "REST", "Запрос индивидуальных ставок")
+
+  Rel(ms_lead, queue, "Kafka", "События по заявкам")
+  Rel(ms_deposit, queue, "Kafka", "События по депозитам")
+  Rel(queue, ms_notification, "Kafka", "Подписка на события")
+  Rel(ms_notification, sms_provider, "REST", "Отправка СМС")
+
+  Rel(manager_deposit, admin_ui, "Управляет ставками и депозитами")
+  Rel(manager_credit, admin_ui, "Передаёт спецставки")
+  Rel(backoffice, admin_ui, "Обрабатывает заявки")
+  Rel(callcenter, admin_ui, "Работает с заявками клиентов")
+}
+
+@enduml
